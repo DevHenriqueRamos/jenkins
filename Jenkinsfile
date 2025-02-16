@@ -5,6 +5,7 @@ pipeline {
     DOCKER_IMAGE = "javahenriquedev/java-api-jenkins"
     DOCKER_TAG = "latest"
     REGISTRY_CREDENTIALS = "9467788c-06ac-4ecd-9d71-9cf499fa855d"
+    GIT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
   }
 
   stages {
@@ -28,7 +29,7 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         script {
-          sh "docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} ."
+          sh "docker build -t ${DOCKER_IMAGE}:${GIT_COMMIT} ."
         }
       }
     }
@@ -37,7 +38,9 @@ pipeline {
       steps {
         script {
           withCredentials([usernamePassword(credentialsId: REGISTRY_CREDENTIALS, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-            sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+            sh ''' 
+              echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+            '''
           }
         }
       }
@@ -46,14 +49,16 @@ pipeline {
     stage('Push to Docker Hub') {
       steps {
         script {
-          sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
+          sh "docker tag ${DOCKER_IMAGE}:${GIT_COMMIT} ${DOCKER_IMAGE}:${DOCKER_TAG}"
+          sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
+          sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
         }
       }
     }
 
     stage('Clean Up') {
       steps {
-        sh "docker rmi ${DOCKER_IMAGE}:${DOCKER_TAG}"
+        sh "docker system prune -af"
       }
     }
   }
