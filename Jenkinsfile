@@ -4,7 +4,7 @@ pipeline {
   environment {
     DOCKER_IMAGE = "javahenriquedev/java-api-jenkins"
     DOCKER_TAG = "latest"
-    REGISTRY_CREDENTIALS = "9467788c-06ac-4ecd-9d71-9cf499fa855d"
+    REGISTRY_CREDENTIALS = "7d6c8564-2a58-421b-a59e-c811474c21da"
     GIT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
   }
 
