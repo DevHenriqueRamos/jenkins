@@ -53,7 +53,7 @@ pipeline {
         script {
           sh "docker tag ${DOCKER_IMAGE}:${GIT_COMMIT} ${DOCKER_IMAGE}:${DOCKER_TAG}"
           sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
-          sh "docker push ${DOCKER_IMAGE}:${GIT_COMMIT}"
+          sh "docker push ${DOCKER_IMAGE}:${DOCKER_TAG}"
         }
       }
     }
@@ -68,7 +68,13 @@ pipeline {
       steps {
         script {
           withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: AWS_CREDENTIALS_ID]]){
-            sh 'aws sts get-caller-identity'
+            sh '''
+              export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+              export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+              export AWS_DEFAULT_REGION=${AWS_REGION}
+
+              aws sts get-caller-identity
+            '''
           }
         }
       }
@@ -88,7 +94,10 @@ pipeline {
 
     stage('Terraform Apply') {
       steps {
-        sh 'cd ./terraform/env/dev/ && terraform apply -var="image_name_dev=${DOCKER_IMAGE}:${DOCKER_TAG}" -auto-approve'
+        sh '''
+          cd ./terraform/env/dev/ 
+          terraform apply -var="image_name_dev=${DOCKER_IMAGE}:${DOCKER_TAG}" -auto-approve
+        '''
       }
     }
   }
