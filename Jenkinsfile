@@ -4,7 +4,7 @@ pipeline {
   environment {
     DOCKER_IMAGE = "javahenriquedev/java-api-jenkins"
     DOCKER_TAG = "latest"
-    REGISTRY_CREDENTIALS = "66c2de5c-d0b3-4bce-8713-6308a3315410"
+    REGISTRY_CREDENTIALS = "9467788c-06ac-4ecd-9d71-9cf499fa855d"
     GIT_COMMIT = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
   }
 
@@ -59,6 +59,24 @@ pipeline {
     stage('Clean Up') {
       steps {
         sh "docker system prune -af"
+      }
+    }
+
+    stage('Terraform Init') {
+      steps {
+        sh "cd ./terraform/env/dev/ && terraform init"
+      }
+    }
+
+    stage('Terraform Validate') {
+      steps {
+      sh "cd ./terraform/env/dev/ && terraform validate"
+      }
+    }
+
+    stage('Terraform Apply') {
+      steps {
+        sh 'cd ./terraform/env/dev/ && terraform apply -var="image_name_dev=${DOCKER_IMAGE}:${DOCKER_TAG}" -auto-approve'
       }
     }
   }
